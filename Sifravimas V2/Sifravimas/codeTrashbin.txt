@@ -1,0 +1,125 @@
+﻿ public static void EncryptTextToFile(String Data, String FileName, byte[] Key, byte[] IV, string CMode)
+        {
+            try
+            {
+                // Create or open the specified file.
+                using FileStream fStream = File.Open(FileName, FileMode.OpenOrCreate);
+
+                /*try
+                {
+                    MemoryStream mStream = new MemoryStream();
+                    DES DESalg = DES.Create();
+                    CryptoStream cStream = new CryptoStream(mStream,
+                        DESalg.CreateEncryptor(Key, IV),
+                        CryptoStreamMode.Write);
+                    byte[] toEncrypt = new ASCIIEncoding().GetBytes(Data);
+                    cStream.Write(toEncrypt, 0, toEncrypt.Length);
+                    cStream.FlushFinalBlock();
+                    byte[] ret = mStream.ToArray();
+                    cStream.Close();
+                    mStream.Close();
+                    return ret;
+                }
+                catch (CryptographicException e)
+                {
+                    Console.WriteLine("A Cryptographic error occurred: {0}", e.Message);
+                    return null;
+                }*/
+
+
+
+                // Create a new DES object.
+                DES DESalg = DES.Create();
+                if (CMode == "ECB")
+                {
+                    MemoryStream mStream = new MemoryStream();
+                    Debug.WriteLine("ECB Mode used in EncryptTXT");
+                    //DESalg.Padding = PaddingMode.None;
+                    DESalg.Mode = CipherMode.ECB;
+                    DESalg.Key = Key;
+                    DESalg.Padding = PaddingMode.PKCS7;
+
+                    CryptoStream cStream = new CryptoStream(fStream,
+                        DESalg.CreateEncryptor(),
+                        CryptoStreamMode.Write);
+
+                    byte[] toEncrypt = new ASCIIEncoding().GetBytes(Data);
+
+                    cStream.Write(toEncrypt, 0, toEncrypt.Length);
+                    cStream.FlushFinalBlock();
+                    byte[] ret = mStream.ToArray();
+                    //StreamWriter sWriter = new StreamWriter(cStream);
+                    //sWriter.WriteLine(Data);
+                    //cStream.FlushFinalBlock();
+                    //sWriter.Close();
+                    cStream.Close();
+                    fStream.Close();
+                }
+                else
+                {
+                    Debug.WriteLine("CBC Mode used in EncryptTXT");
+                    DESalg.Mode = CipherMode.CBC;
+                    CryptoStream cStream = new CryptoStream(fStream,
+                        DESalg.CreateEncryptor(Key, IV),
+                        CryptoStreamMode.Write);
+                    StreamWriter sWriter = new StreamWriter(cStream);
+                    sWriter.WriteLine(Data);
+                    sWriter.Close();
+                    cStream.Close();
+                    fStream.Close();
+                }
+            }
+            catch (CryptographicException e)
+            {
+                MessageBox.Show("An error had ocurred, make sure you're using the right deciphering mode.");
+                Console.WriteLine("A Cryptographic error occurred: {0}", e.Message);
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Console.WriteLine("A file error occurred: {0}", e.Message);
+            }
+        }
+
+
+
+        public static byte[] EncryptTextToMemory(string Data, byte[] Key, byte[] IV)
+        {
+            try
+            {
+                // Create a MemoryStream.
+                MemoryStream mStream = new MemoryStream();
+
+                // Create a new DES object.
+                DES DESalg = DES.Create();
+
+                // Create a CryptoStream using the MemoryStream
+                // and the passed key and initialization vector (IV).
+                CryptoStream cStream = new CryptoStream(mStream,
+                    DESalg.CreateEncryptor(Key, IV),
+                    CryptoStreamMode.Write);
+
+                // Convert the passed string to a byte array.
+                byte[] toEncrypt = new ASCIIEncoding().GetBytes(Data);
+
+                // Write the byte array to the crypto stream and flush it.
+                cStream.Write(toEncrypt, 0, toEncrypt.Length);
+                cStream.FlushFinalBlock();
+
+                // Get an array of bytes from the
+                // MemoryStream that holds the
+                // encrypted data.
+                byte[] ret = mStream.ToArray();
+
+                // Close the streams.
+                cStream.Close();
+                mStream.Close();
+
+                // Return the encrypted buffer.
+                return ret;
+            }
+            catch (CryptographicException e)
+            {
+                Console.WriteLine("A Cryptographic error occurred: {0}", e.Message);
+                return null;
+            }
+        }
